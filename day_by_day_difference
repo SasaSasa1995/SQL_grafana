@@ -1,0 +1,23 @@
+SELECT 
+    time,
+    orgID,
+    companyID,
+    IFNULL(ok_event_number - lag_ok_event_number, 0) AS daily_event_difference
+FROM (
+    SELECT 
+        t1.ts AS time,
+        t1.orgID,
+        t1.companyID,
+        t1.ok_event_number,
+        (SELECT t2.ok_event_number 
+         FROM esaw_monitoring t2 
+         WHERE t2.orgID = t1.orgID 
+         AND t2.companyID = t1.companyID 
+         AND t2.ts < t1.ts 
+         ORDER BY t2.ts DESC 
+         LIMIT 1) AS lag_ok_event_number
+    FROM 
+        esaw_monitoring t1
+) AS subquery
+ORDER BY 
+    time, orgID, companyID;
